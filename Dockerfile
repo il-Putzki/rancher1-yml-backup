@@ -1,6 +1,6 @@
 FROM python:3
 
-LABEL maintainer="Maksym Kotiash from Greg Solutions"
+LABEL maintainer="Maksym Kotiash"
 
 COPY run.py requirements.txt app/
 
