@@ -1,14 +1,30 @@
-# This is a sample build configuration for Python.
-# Check our guides at https://confluence.atlassian.com/x/x4UWN for more examples.
-# Only use spaces to indent your .yml configuration.
-# -----
-# You can specify a custom docker image from Docker Hub as your build environment.
-image: python:3.7.3
+image: python:3 # Choose an image matching your project needs
 
-pipelines:
-  default:
-    - step:
-        caches:
-          - pip
-        script: # Modify the commands below to build your repository.
-          - pip install -r requirements.txt
+clone:
+      depth: full              # SonarCloud scanner needs the full history to assign issues properly
+
+definitions:
+      caches:
+            sonar: ~/.sonar/cache  # Caching SonarCloud artifacts will speed up your build
+      steps:
+      - step: &build-test-sonarcloud
+              name: Build, test and analyze on SonarCloud
+              caches:
+              - pip           # See https://confluence.atlassian.com/bitbucket/caching-dependencies-895552876.html
+              - sonar
+              script:
+              - pipe: sonarsource/sonarcloud-scan:1.0.1
+      - step: &check-quality-gate-sonarcloud
+              name: Check the Quality Gate on SonarCloud
+              script:
+              - pipe: sonarsource/sonarcloud-quality-gate:0.1.2
+
+pipelines:                 # More info here: https://confluence.atlassian.com/bitbucket/configure-bitbucket-pipelines-yml-792298910.html
+  branches:
+    master:
+      - step: *build-test-sonarcloud
+      - step: *check-quality-gate-sonarcloud
+  pull-requests:
+    '**':
+      - step: *build-test-sonarcloud
+      - step: *check-quality-gate-sonarcloud
